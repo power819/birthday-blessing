@@ -22,6 +22,7 @@
     "qrcode": "^1.5.4"
   },
   "devDependencies": {
-    "@railway/cli": "^4.66.0"
+    "@railway/cli": "^4.66.0",
+    "localtunnel": "^2.0.2"
   }
 }

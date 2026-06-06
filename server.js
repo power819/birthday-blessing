@@ -5,7 +5,7 @@ const QRCode = require('qrcode');
 const { createBlessing, getBlessing } = require('./db');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // ============ Middleware ============
 
@@ -15,7 +15,7 @@ app.set('views', path.join(__dirname, 'views'));
 // Serve uploaded photos
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
-// Multer config for photo upload
+// Multer config for file uploads (photo + voice)
 const storage = multer.diskStorage({
   destination: path.join(__dirname, 'public', 'uploads'),
   filename: (req, file, cb) => {
@@ -25,13 +25,14 @@ const storage = multer.diskStorage({
 });
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB max
   fileFilter: (req, file, cb) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
-    if (allowed.includes(file.mimetype)) {
+    const imageTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const audioTypes = ['audio/webm', 'audio/wav', 'audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/webm;codecs=opus'];
+    if (imageTypes.includes(file.mimetype) || audioTypes.includes(file.mimetype) || file.mimetype.startsWith('audio/')) {
       cb(null, true);
     } else {
-      cb(new Error('只支持 JPG、PNG、WebP 格式的图片'));
+      cb(new Error('不支持的文件格式，请上传 JPG/PNG/WebP 图片或 WebM/WAV/MP3 音频'));
     }
   }
 });
@@ -71,53 +72,72 @@ app.get('/b/:id', (req, res) => {
   res.render('blessing', { blessing });
 });
 
-// Create blessing API
-app.post('/api/create', upload.single('photo'), async (req, res) => {
-  try {
-    const { name, template, message, sender, birthday } = req.body;
+// Create blessing API - handle both photo and voice uploads
+const uploadFields = upload.fields([
+  { name: 'photo', maxCount: 1 },
+  { name: 'voice', maxCount: 1 }
+]);
 
-    // Validate required fields
-    if (!name || !name.trim()) {
-      return res.status(400).json({ error: '请输入寿星的姓名' });
+app.post('/api/create', function (req, res) {
+  uploadFields(req, res, async function (err) {
+    if (err) {
+      console.error('Upload error:', err);
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: '文件不能超过 10MB' });
+      }
+      return res.status(400).json({ error: '文件上传失败: ' + err.message });
     }
 
-    // Build photo path
-    const photoPath = req.file ? '/uploads/' + req.file.filename : null;
+    try {
+      const { name, template, message, sender, birthday } = req.body;
 
-    // Create in database
-    const id = createBlessing({
-      name: name.trim(),
-      photo: photoPath,
-      template: template || 'default',
-      message: message || null,
-      sender: sender || null,
-      birthday: birthday || null
-    });
+      // Validate required fields
+      if (!name || !name.trim()) {
+        return res.status(400).json({ error: '请输入寿星的姓名' });
+      }
 
-    // Build the full URL
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const blessingUrl = `${baseUrl}/b/${id}`;
+      // Build file paths
+      const photoPath = req.files && req.files.photo && req.files.photo[0]
+        ? '/uploads/' + req.files.photo[0].filename : null;
+      const voicePath = req.files && req.files.voice && req.files.voice[0]
+        ? '/uploads/' + req.files.voice[0].filename : null;
 
-    // Generate QR code as data URL
-    const qrcodeDataUrl = await QRCode.toDataURL(blessingUrl, {
-      width: 400,
-      margin: 2,
-      color: { dark: '#e91e63', light: '#ffffff' }
-    });
+      // Create in database
+      const id = createBlessing({
+        name: name.trim(),
+        photo: photoPath,
+        voice: voicePath,
+        template: template || 'default',
+        message: message || null,
+        sender: sender || null,
+        birthday: birthday || null
+      });
 
-    res.json({
-      success: true,
-      id,
-      url: blessingUrl,
-      qrcode: qrcodeDataUrl
-    });
-  } catch (err) {
-    console.error('Create error:', err);
-    if (err.message && err.message.includes('格式')) {
-      return res.status(400).json({ error: err.message });
+      // Build the full URL
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const blessingUrl = `${baseUrl}/b/${id}`;
+
+      // Generate QR code as data URL
+      const qrcodeDataUrl = await QRCode.toDataURL(blessingUrl, {
+        width: 400,
+        margin: 2,
+        color: { dark: '#e91e63', light: '#ffffff' }
+      });
+
+      res.json({
+        success: true,
+        id,
+        url: blessingUrl,
+        qrcode: qrcodeDataUrl
+      });
+    } catch (err) {
+      console.error('Create error:', err);
+      if (err.message && err.message.includes('格式')) {
+        return res.status(400).json({ error: err.message });
+      }
+      res.status(500).json({ error: '创建失败，请稍后重试' });
     }
-    res.status(500).json({ error: '创建失败，请稍后重试' });
-  }
+  });
 });
 
 // Get blessing JSON

@@ -171,6 +171,29 @@
 
     /* Sender */
     .sender {
+
+    /* Voice player */
+    .voice-player {
+      margin-bottom: 20px;
+      animation: fadeUp 0.8s ease 0.65s both;
+    }
+
+    .voice-label {
+      font-size: 14px;
+      color: #e91e63;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .voice-player audio {
+      width: 100%;
+      max-width: 280px;
+      height: 40px;
+      border-radius: 20px;
+      background: #fef5f8;
+    }
+
+    /* Sender */
       font-size: 15px;
       color: #e91e63;
       font-weight: 600;
@@ -252,6 +275,14 @@
       <div class="message-box">
         <div class="message-text"><%= blessing.message %></div>
       </div>
+
+      <!-- Voice player -->
+      <% if (blessing.voice) { %>
+        <div class="voice-player">
+          <p class="voice-label">🎙️ 语音祝福</p>
+          <audio controls src="<%= blessing.voice %>"></audio>
+        </div>
+      <% } %>
 
       <!-- Sender -->
       <% if (blessing.sender) { %>

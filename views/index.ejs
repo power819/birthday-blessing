@@ -109,16 +109,8 @@
       min-height: 80px;
     }
 
-    .photo-upload {
-      position: relative;
-    }
-
     .photo-upload input[type="file"] {
-      position: absolute;
-      opacity: 0;
-      width: 100%;
-      height: 100%;
-      cursor: pointer;
+      display: none;
     }
 
     .photo-label {
@@ -159,6 +151,72 @@
     .photo-preview .remove-photo {
       display: inline-block;
       margin-top: 8px;
+      color: #e91e63;
+      cursor: pointer;
+      font-size: 13px;
+      text-decoration: underline;
+    }
+
+    .voice-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .voice-btn {
+      padding: 12px 24px;
+      border-radius: 24px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: none;
+      font-family: inherit;
+    }
+
+    .record-btn {
+      background: #fff0f3;
+      color: #e91e63;
+      border: 2px solid #f48fb1;
+    }
+
+    .record-btn:hover {
+      background: #fce4ec;
+      transform: scale(1.02);
+    }
+
+    .record-btn.recording {
+      background: #e91e63;
+      color: white;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(233, 30, 99, 0.4); }
+      50% { box-shadow: 0 0 0 12px rgba(233, 30, 99, 0); }
+    }
+
+    .recording-status {
+      font-size: 14px;
+      color: #e91e63;
+      font-weight: 600;
+    }
+
+    .voice-preview {
+      margin-top: 12px;
+    }
+
+    .voice-preview audio {
+      width: 100%;
+      max-width: 300px;
+      height: 40px;
+      border-radius: 8px;
+    }
+
+    .remove-voice {
+      display: inline-block;
+      margin-top: 6px;
       color: #e91e63;
       cursor: pointer;
       font-size: 13px;
@@ -343,9 +401,9 @@
         <div class="form-group">
           <label>照片</label>
           <div class="photo-upload">
-            <div class="photo-label" id="photoLabel">
+            <label class="photo-label" id="photoLabel" for="photoInput">
               <span>📷</span> 点击上传照片（可选）
-            </div>
+            </label>
             <input type="file" name="photo" id="photoInput" accept="image/jpeg,image/png,image/webp">
           </div>
           <div class="photo-preview" id="photoPreview">
@@ -365,6 +423,23 @@
             <option value="simple">🎈 简单真挚</option>
           </select>
           <p class="hint" id="templateHint">亲爱的{name}，祝你生日快乐！🎂 愿你新的一岁充满阳光与欢笑，所有的梦想都能一一实现。</p>
+        </div>
+
+        <!-- Voice recording -->
+        <div class="form-group">
+          <label>🎙️ 语音祝福（可选）</label>
+          <div class="voice-section">
+            <button type="button" class="voice-btn record-btn" id="recordBtn">
+              <span class="record-icon">🔴</span> 录制语音祝福
+            </button>
+            <span class="recording-status" id="recordingStatus"></span>
+          </div>
+          <div class="voice-preview" id="voicePreview" style="display:none;">
+            <audio id="voiceAudio" controls></audio>
+            <span class="remove-voice" id="removeVoice">删除录音</span>
+          </div>
+          <input type="hidden" name="voiceBlob" id="voiceBlobData">
+          <p class="hint" id="voiceHint">录制一段生日祝福语音，扫码后可以播放</p>
         </div>
 
         <!-- Custom message -->
@@ -452,6 +527,65 @@
       photoLabel.style.display = 'flex';
     });
 
+    // Voice recording
+    let voiceBlob = null;
+    let mediaRecorder = null;
+    const recordBtn = document.getElementById('recordBtn');
+    const recordingStatus = document.getElementById('recordingStatus');
+    const voicePreview = document.getElementById('voicePreview');
+    const voiceAudio = document.getElementById('voiceAudio');
+    const removeVoice = document.getElementById('removeVoice');
+    const voiceHint = document.getElementById('voiceHint');
+
+    recordBtn.addEventListener('click', async () => {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        // Stop recording
+        mediaRecorder.stop();
+        return;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+        const chunks = [];
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) chunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          voiceBlob = new Blob(chunks, { type: 'audio/webm' });
+          voiceAudio.src = URL.createObjectURL(voiceBlob);
+          voicePreview.style.display = 'block';
+          recordBtn.innerHTML = '<span class="record-icon">🔴</span> 重新录制';
+          recordBtn.classList.remove('recording');
+          recordingStatus.textContent = '';
+          voiceHint.textContent = '录音完成！可以播放试听';
+          // Stop mic
+          stream.getTracks().forEach(t => t.stop());
+        };
+
+        mediaRecorder.start();
+        recordBtn.classList.add('recording');
+        recordBtn.innerHTML = '<span class="record-icon">⏹️</span> 停止录制';
+        recordingStatus.textContent = '● 正在录音...';
+        voiceHint.textContent = '正在录制，点击停止完成录音';
+      } catch (err) {
+        alert('无法访问麦克风，请检查浏览器权限设置');
+        console.error('Mic error:', err);
+      }
+    });
+
+    removeVoice.addEventListener('click', () => {
+      voiceBlob = null;
+      voicePreview.style.display = 'none';
+      voiceAudio.src = '';
+      recordBtn.innerHTML = '<span class="record-icon">🔴</span> 录制语音祝福';
+      recordBtn.classList.remove('recording');
+      recordingStatus.textContent = '';
+      voiceHint.textContent = '录制一段生日祝福语音，扫码后可以播放';
+    });
+
     // Form submit
     const form = document.getElementById('blessingForm');
     const submitBtn = document.getElementById('submitBtn');
@@ -477,6 +611,11 @@
       submitBtn.disabled = true;
 
       const formData = new FormData(form);
+
+      // Append voice blob if recorded
+      if (voiceBlob) {
+        formData.append('voice', voiceBlob, 'blessing-voice.webm');
+      }
 
       try {
         const res = await fetch('/api/create', {

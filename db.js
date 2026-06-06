@@ -14,6 +14,7 @@ db.exec(`
     id         TEXT PRIMARY KEY,
     name       TEXT NOT NULL,
     photo      TEXT,
+    voice      TEXT,
     template   TEXT DEFAULT 'default',
     message    TEXT,
     sender     TEXT,
@@ -22,24 +23,30 @@ db.exec(`
   )
 `);
 
+// Add voice column if not exists (migration for existing DB)
+try {
+  db.exec('ALTER TABLE blessings ADD COLUMN voice TEXT');
+} catch (e) {
+  // Column already exists, ignore
+}
+
 // Generate a unique 8-character ID
 function generateId() {
   return crypto.randomBytes(4).toString('hex'); // 8 hex chars
 }
 
 // Insert a new blessing
-function createBlessing({ name, photo, template, message, sender, birthday }) {
+function createBlessing({ name, photo, voice, template, message, sender, birthday }) {
   let id;
-  // Ensure unique ID (collision is extremely unlikely but check anyway)
   do {
     id = generateId();
   } while (db.prepare('SELECT 1 FROM blessings WHERE id = ?').get(id));
 
   const stmt = db.prepare(`
-    INSERT INTO blessings (id, name, photo, template, message, sender, birthday)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO blessings (id, name, photo, voice, template, message, sender, birthday)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  stmt.run(id, name, photo || null, template || 'default', message || null, sender || null, birthday || null);
+  stmt.run(id, name, photo || null, voice || null, template || 'default', message || null, sender || null, birthday || null);
   return id;
 }
 
