@@ -1,0 +1,8 @@
+node_modules/
+blessings.db*
+public/uploads/*
+!public/uploads/.gitkeep
+.env
+*.log
+.DS_Store
+.omc/
