@@ -474,16 +474,23 @@
       <h1>🎂 生日祝福生成器</h1>
       <p class="subtitle">填写信息，生成独一无二的生日祝福二维码</p>
 
-      <!-- Password Screen -->
+      <!-- Login Screen -->
       <div class="password-screen" id="passwordScreen">
         <div class="lock-icon">🔐</div>
-        <h2>请输入密码</h2>
-        <p>输入密码后即可生成生日祝福</p>
-        <div class="password-input-wrapper">
-          <input type="password" id="passwordInput" placeholder="请输入密码" maxlength="20" autofocus>
-          <button id="passwordSubmitBtn">确认</button>
+        <h2>账号登录</h2>
+        <p>输入账号和密码后即可生成生日祝福</p>
+        <div class="form-group" style="text-align:left;">
+          <label>账号</label>
+          <input type="text" id="accountInput" placeholder="请输入一串数字账号" maxlength="20" autofocus style="width:100%;padding:12px 16px;border:2px solid #f0d0dc;border-radius:12px;font-size:15px;background:#fef5f8;color:#333;outline:none;text-align:center;font-family:inherit;">
+          <p class="hint">账号为一串数字（至少 7 位）</p>
         </div>
-        <p class="password-error" id="passwordError">❌ 密码错误，请重试</p>
+        <div class="form-group" style="text-align:left;margin-top:16px;">
+          <label>密码</label>
+          <input type="password" id="passwordInput" placeholder="请输入密码" maxlength="20" style="width:100%;padding:12px 16px;border:2px solid #f0d0dc;border-radius:12px;font-size:15px;background:#fef5f8;color:#333;outline:none;text-align:center;letter-spacing:4px;font-family:inherit;">
+          <p class="hint">密码由账号的第 2-7 位倒数数字组成</p>
+        </div>
+        <button id="passwordSubmitBtn" class="submit-btn" style="margin-top:8px;">确认登录</button>
+        <p class="password-error" id="passwordError">❌ 账号或密码错误，请重试</p>
       </div>
 
       <!-- Form (hidden until password verified) -->
@@ -587,34 +594,71 @@
   </div>
 
   <script>
-    // ============ Password Protection ============
-    const CORRECT_PASSWORD = '214188';
+    // ============ Account + Password Login ============
+    // Password rule: 账号倒数第2位在前，依次倒数第3位到倒数第7位（共6位）
+    function computePassword(account) {
+      if (account.length < 7) return null;
+      // 倒数第2位(index = len-2), 倒数第3位(len-3), ..., 倒数第7位(len-7)
+      let pwd = '';
+      for (let i = 2; i <= 7; i++) {
+        pwd += account[account.length - i];
+      }
+      return pwd;
+    }
+
     const passwordScreen = document.getElementById('passwordScreen');
+    const accountInput = document.getElementById('accountInput');
     const passwordInput = document.getElementById('passwordInput');
     const passwordSubmitBtn = document.getElementById('passwordSubmitBtn');
     const passwordError = document.getElementById('passwordError');
     const formWrapper = document.getElementById('formWrapper');
 
-    function checkPassword() {
-      if (passwordInput.value === CORRECT_PASSWORD) {
+    function checkLogin() {
+      const account = accountInput.value.trim();
+      const pwd = passwordInput.value.trim();
+
+      // Validate account: must be all digits and at least 7 characters
+      if (!/^\d{7,}$/.test(account)) {
+        passwordError.textContent = '❌ 账号必须是至少 7 位数字';
+        passwordError.classList.add('show');
+        shakeElement(accountInput);
+        return;
+      }
+
+      const expectedPwd = computePassword(account);
+      if (pwd === expectedPwd) {
         passwordScreen.style.display = 'none';
         formWrapper.style.display = 'block';
         passwordError.classList.remove('show');
       } else {
+        passwordError.textContent = '❌ 密码错误，请重试（密码由账号倒数第 2~7 位组成）';
         passwordError.classList.add('show');
         passwordInput.value = '';
         passwordInput.focus();
-        // Shake animation
-        passwordInput.style.animation = 'none';
-        passwordInput.offsetHeight; // trigger reflow
-        passwordInput.style.animation = 'shake 0.4s ease';
+        shakeElement(passwordInput);
       }
     }
 
-    passwordSubmitBtn.addEventListener('click', checkPassword);
+    function shakeElement(el) {
+      el.style.animation = 'none';
+      el.offsetHeight; // trigger reflow
+      el.style.animation = 'shake 0.4s ease';
+    }
+
+    // Allow only digits in account input
+    accountInput.addEventListener('input', () => {
+      accountInput.value = accountInput.value.replace(/\D/g, '');
+    });
+
+    passwordSubmitBtn.addEventListener('click', checkLogin);
+    accountInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        passwordInput.focus();
+      }
+    });
     passwordInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        checkPassword();
+        checkLogin();
       }
     });
 
