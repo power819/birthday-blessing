@@ -276,6 +276,85 @@
       transform: none;
     }
 
+    /* Password screen */
+    .password-screen {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .password-screen .lock-icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+    }
+
+    .password-screen h2 {
+      font-size: 22px;
+      color: #e91e63;
+      margin-bottom: 8px;
+    }
+
+    .password-screen p {
+      font-size: 14px;
+      color: #999;
+      margin-bottom: 24px;
+    }
+
+    .password-input-wrapper {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .password-input-wrapper input {
+      width: 200px;
+      padding: 12px 16px;
+      border: 2px solid #f0d0dc;
+      border-radius: 12px;
+      font-size: 18px;
+      text-align: center;
+      letter-spacing: 4px;
+      background: #fef5f8;
+      color: #333;
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      font-family: inherit;
+    }
+
+    .password-input-wrapper input:focus {
+      border-color: #e91e63;
+      box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+      background: #fff;
+    }
+
+    .password-input-wrapper button {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #e91e63, #f06292);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.3s;
+      font-family: inherit;
+    }
+
+    .password-input-wrapper button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(233, 30, 99, 0.3);
+    }
+
+    .password-error {
+      display: none;
+      color: #d32f2f;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+
+    .password-error.show {
+      display: block;
+    }
+
     /* Result section */
     .result {
       display: none;
@@ -367,6 +446,13 @@
       to { transform: rotate(360deg); }
     }
 
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      50% { transform: translateX(6px); }
+      75% { transform: translateX(-4px); }
+    }
+
     footer {
       text-align: center;
       color: rgba(255,255,255,0.7);
@@ -388,6 +474,20 @@
       <h1>🎂 生日祝福生成器</h1>
       <p class="subtitle">填写信息，生成独一无二的生日祝福二维码</p>
 
+      <!-- Password Screen -->
+      <div class="password-screen" id="passwordScreen">
+        <div class="lock-icon">🔐</div>
+        <h2>请输入密码</h2>
+        <p>输入密码后即可生成生日祝福</p>
+        <div class="password-input-wrapper">
+          <input type="password" id="passwordInput" placeholder="请输入密码" maxlength="20" autofocus>
+          <button id="passwordSubmitBtn">确认</button>
+        </div>
+        <p class="password-error" id="passwordError">❌ 密码错误，请重试</p>
+      </div>
+
+      <!-- Form (hidden until password verified) -->
+      <div id="formWrapper" style="display:none;">
       <div class="error-msg" id="errorMsg"></div>
 
       <form id="blessingForm" enctype="multipart/form-data">
@@ -481,11 +581,43 @@
           <button class="btn-secondary" id="newOneBtn">🔄 再做一个</button>
         </div>
       </div>
+      </div><!-- /formWrapper -->
     </div>
     <footer>用 ❤️ 传递生日祝福</footer>
   </div>
 
   <script>
+    // ============ Password Protection ============
+    const CORRECT_PASSWORD = '214188';
+    const passwordScreen = document.getElementById('passwordScreen');
+    const passwordInput = document.getElementById('passwordInput');
+    const passwordSubmitBtn = document.getElementById('passwordSubmitBtn');
+    const passwordError = document.getElementById('passwordError');
+    const formWrapper = document.getElementById('formWrapper');
+
+    function checkPassword() {
+      if (passwordInput.value === CORRECT_PASSWORD) {
+        passwordScreen.style.display = 'none';
+        formWrapper.style.display = 'block';
+        passwordError.classList.remove('show');
+      } else {
+        passwordError.classList.add('show');
+        passwordInput.value = '';
+        passwordInput.focus();
+        // Shake animation
+        passwordInput.style.animation = 'none';
+        passwordInput.offsetHeight; // trigger reflow
+        passwordInput.style.animation = 'shake 0.4s ease';
+      }
+    }
+
+    passwordSubmitBtn.addEventListener('click', checkPassword);
+    passwordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        checkPassword();
+      }
+    });
+
     // Template previews
     const templateMessages = {
       default: '亲爱的{name}，祝你生日快乐！🎂 愿你新的一岁充满阳光与欢笑，所有的梦想都能一一实现。',
