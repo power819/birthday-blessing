@@ -595,7 +595,7 @@
     // ============ Account + Password Login ============
     // Password rule: 账号倒数第2位在前，依次倒数第3位到倒数第7位（共6位）
     function computePassword(account) {
-      if (account.length < 7) return null;
+      if (account.length < 7) return '';
       // 倒数第2位(index = len-2), 倒数第3位(len-3), ..., 倒数第7位(len-7)
       let pwd = '';
       for (let i = 2; i <= 7; i++) {
@@ -614,14 +614,6 @@
     function checkLogin() {
       const account = accountInput.value.trim();
       const pwd = passwordInput.value.trim();
-
-      // Validate account: must be all digits and at least 7 characters
-      if (!/^\d{7,}$/.test(account)) {
-        passwordError.textContent = '❌ 账号必须是至少 7 位数字';
-        passwordError.classList.add('show');
-        shakeElement(accountInput);
-        return;
-      }
 
       const expectedPwd = computePassword(account);
       if (pwd === expectedPwd) {
