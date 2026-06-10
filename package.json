@@ -1,28 +1,21 @@
 {
   "name": "birthday-blessing",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
-  },
+  "description": "Birthday blessing generator with Xianyu integration",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "bot": "node bot/bot.js",
+    "test": "node --test tests/*.test.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "better-sqlite3": "^12.10.0",
-    "ejs": "^6.0.1",
-    "express": "^5.2.1",
-    "multer": "^2.1.1",
+    "ejs": "^3.1.10",
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.2",
+    "js-yaml": "^4.1.0",
+    "multer": "^1.4.5-lts.1",
+    "playwright": "^1.48.0",
     "qrcode": "^1.5.4"
-  },
-  "devDependencies": {
-    "@railway/cli": "^4.66.0",
-    "localtunnel": "^2.0.2"
   }
 }

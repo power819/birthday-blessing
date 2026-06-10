@@ -1,8 +1,8 @@
 node_modules/
-blessings.db*
+.env
 public/uploads/*
 !public/uploads/.gitkeep
-.env
-*.log
-.DS_Store
-.omc/
+bot/cookies/*
+!bot/cookies/.gitkeep
+bot/storage/
+*.db
