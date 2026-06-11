@@ -1,8 +1,7 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
-const multer = require('multer');
-const QRCode = require('qrcode');
-const { createBlessing, getBlessing } = require('./db');
+const { getBlessing } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -12,30 +11,11 @@ const PORT = process.env.PORT || 3001;
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Parse JSON request bodies (needed for Xianyu API routes)
+app.use(express.json());
+
 // Serve uploaded photos
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
-
-// Multer config for file uploads (photo + voice)
-const storage = multer.diskStorage({
-  destination: path.join(__dirname, 'public', 'uploads'),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, Date.now() + '-' + Math.round(Math.random() * 1e9) + ext);
-  }
-});
-const upload = multer({
-  storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB max
-  fileFilter: (req, file, cb) => {
-    const imageTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    const audioTypes = ['audio/webm', 'audio/wav', 'audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/webm;codecs=opus'];
-    if (imageTypes.includes(file.mimetype) || audioTypes.includes(file.mimetype) || file.mimetype.startsWith('audio/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('不支持的文件格式，请上传 JPG/PNG/WebP 图片或 WebM/WAV/MP3 音频'));
-    }
-  }
-});
 
 // ============ Blessing Templates ============
 
@@ -61,84 +41,18 @@ app.get('/', (req, res) => {
   res.render('index', { templates: Object.keys(TEMPLATES), error: null });
 });
 
-// Blessing display page
-app.get('/b/:id', (req, res) => {
-  const blessing = getBlessing(req.params.id);
-  if (!blessing) {
-    return res.status(404).render('404');
-  }
-  // Render the message from template + custom override
-  blessing.message = fillTemplate(blessing.template, blessing.name, blessing.message);
-  res.render('blessing', { blessing });
-});
+// ---- Mount Xianyu-integration routers ----
+const ordersRouter = require('./routes/orders');
+const verifyRouter = require('./routes/verify');
+const createRouter = require('./routes/create');
+const blessingRouter = require('./routes/blessing');
 
-// Create blessing API - handle both photo and voice uploads
-const uploadFields = upload.fields([
-  { name: 'photo', maxCount: 1 },
-  { name: 'voice', maxCount: 1 }
-]);
-
-app.post('/api/create', function (req, res) {
-  uploadFields(req, res, async function (err) {
-    if (err) {
-      console.error('Upload error:', err);
-      if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({ error: '文件不能超过 10MB' });
-      }
-      return res.status(400).json({ error: '文件上传失败: ' + err.message });
-    }
-
-    try {
-      const { name, template, message, sender, birthday } = req.body;
-
-      // Validate required fields
-      if (!name || !name.trim()) {
-        return res.status(400).json({ error: '请输入寿星的姓名' });
-      }
-
-      // Build file paths
-      const photoPath = req.files && req.files.photo && req.files.photo[0]
-        ? '/uploads/' + req.files.photo[0].filename : null;
-      const voicePath = req.files && req.files.voice && req.files.voice[0]
-        ? '/uploads/' + req.files.voice[0].filename : null;
-
-      // Create in database
-      const id = createBlessing({
-        name: name.trim(),
-        photo: photoPath,
-        voice: voicePath,
-        template: template || 'default',
-        message: message || null,
-        sender: sender || null,
-        birthday: birthday || null
-      });
-
-      // Build the full URL
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
-      const blessingUrl = `${baseUrl}/b/${id}`;
-
-      // Generate QR code as data URL
-      const qrcodeDataUrl = await QRCode.toDataURL(blessingUrl, {
-        width: 400,
-        margin: 2,
-        color: { dark: '#e91e63', light: '#ffffff' }
-      });
-
-      res.json({
-        success: true,
-        id,
-        url: blessingUrl,
-        qrcode: qrcodeDataUrl
-      });
-    } catch (err) {
-      console.error('Create error:', err);
-      if (err.message && err.message.includes('格式')) {
-        return res.status(400).json({ error: err.message });
-      }
-      res.status(500).json({ error: '创建失败，请稍后重试' });
-    }
-  });
-});
+app.use('/api/orders', ordersRouter);
+app.use('/verify', verifyRouter);
+app.use('/api/verify', verifyRouter);
+app.use('/create', createRouter);
+app.use('/api/create', createRouter);  // unified POST endpoint (legacy + Xianyu flows)
+app.use('/b', blessingRouter);
 
 // Get blessing JSON
 app.get('/api/blessing/:id', (req, res) => {
