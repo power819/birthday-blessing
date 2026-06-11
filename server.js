@@ -76,8 +76,36 @@ app.use((err, req, res, next) => {
   res.status(500).render('404');
 });
 
+// ============ Health check ============
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime() });
+});
+
+// ============ Crash protection ============
+
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION:', err);
+  // Don't exit — let the error handler deal with it
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('UNHANDLED REJECTION:', reason);
+});
+
 // ============ Start ============
 
-app.listen(PORT, () => {
-  console.log(`🎂 生日祝福生成器已启动: http://localhost:${PORT}`);
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🎂 生日祝福生成器已启动: http://0.0.0.0:${PORT}`);
+});
+
+server.on('error', (err) => {
+  console.error('Server error:', err);
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} in use, retrying...`);
+    setTimeout(() => {
+      server.close();
+      server.listen(PORT, '0.0.0.0');
+    }, 1000);
+  }
 });
