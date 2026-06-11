@@ -6,12 +6,14 @@ const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
 
+const CHROMIUM_PATH = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined;
+
 const BROWSER_ARGS = [
   '--no-sandbox',
   '--disable-setuid-sandbox',
-  '--disable-dev-shm-usage',   // Railway: limited /dev/shm
+  '--disable-dev-shm-usage',
   '--disable-gpu',
-  '--single-process',           // Railway: reduce memory
+  '--single-process',
 ];
 
 class XianyuClient {
@@ -33,6 +35,7 @@ class XianyuClient {
     try {
       this.browser = await chromium.launch({
         headless: true,
+        executablePath: CHROMIUM_PATH,
         args: BROWSER_ARGS
       });
       this.context = await this.browser.newContext({
