@@ -1,0 +1,23 @@
+# 闲鱼 Bot 配置文件
+# 编辑此文件以配置多账号监控
+
+accounts:
+  - name: "主号"
+    cookie_file: "./bot/cookies/account-a.json"
+
+monitor:
+  interval_ms: 60000          # 轮询间隔（毫秒）
+  # 闲鱼"已卖出的宝贝"页面 URL，留空则自动使用默认
+  sold_url: ""
+
+reply:
+  # {password} = 8位祝福密钥, {website_url} = 网站地址
+  template: |
+    您好，您的祝福密钥是：{password}
+
+    请在 24 小时内访问 {website_url}/verify
+    输入密钥即可创建专属生日祝福 🎂🎉
+
+xianyu:
+  base_url: "https://www.goofish.com"
+  im_url: "https://www.goofish.com/im"
