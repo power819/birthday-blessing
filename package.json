@@ -1,12 +1,10 @@
 {
   "name": "birthday-blessing",
   "version": "1.0.0",
-  "description": "Birthday blessing generator with Xianyu integration",
+  "description": "Birthday blessing generator — create beautiful birthday pages with QR codes",
   "main": "server.js",
   "scripts": {
-    "postinstall": "npx playwright install chromium",
     "start": "node server.js",
-    "bot": "node bot/bot.js",
     "test": "node --test tests/*.test.js"
   },
   "dependencies": {
@@ -14,10 +12,7 @@
     "dotenv": "^17.4.2",
     "ejs": "^3.1.10",
     "express": "^4.21.0",
-    "js-yaml": "^4.1.0",
-    "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
-    "playwright": "^1.48.0",
     "qrcode": "^1.5.4"
   }
 }
