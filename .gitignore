@@ -2,7 +2,8 @@ node_modules/
 .env
 public/uploads/*
 !public/uploads/.gitkeep
-bot/cookies/*
-!bot/cookies/.gitkeep
-bot/storage/
 *.db
+*.db-shm
+*.db-wal
+server.log
+.omc/
