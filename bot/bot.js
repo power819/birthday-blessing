@@ -12,6 +12,27 @@ const { poll } = require('./monitor');
 const CONFIG_PATH = process.env.BOT_CONFIG || path.join(__dirname, 'config.yaml');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
+// If BOT_COOKIE env var is set, decode and write the cookie file.
+// This allows passing cookies via Railway environment variables (base64-encoded JSON).
+function ensureCookieFile() {
+  const cookieEnv = process.env.BOT_COOKIE;
+  if (!cookieEnv) return; // No env var — use local file
+
+  const targetPath = path.resolve(__dirname, 'cookies', 'account-a.json');
+  if (fs.existsSync(targetPath)) return; // Already exists
+
+  try {
+    const json = Buffer.from(cookieEnv, 'base64').toString('utf-8');
+    const dir = path.dirname(targetPath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(targetPath, json, 'utf-8');
+    console.log('✅ 已从 BOT_COOKIE 环境变量还原 Cookie 文件');
+  } catch (e) {
+    console.error('❌ BOT_COOKIE 解码失败:', e.message);
+  }
+}
+ensureCookieFile();
+
 const API_KEY = process.env.API_KEY || 'change-me';
 const WEBSITE_URL = process.env.WEBSITE_URL || 'http://localhost:3000';
 const API_BASE = process.env.API_BASE || WEBSITE_URL;
