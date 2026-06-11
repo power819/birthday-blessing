@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎂 生日祝福生成器</title>
+  <title>🎂 创建生日祝福</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -276,85 +276,6 @@
       transform: none;
     }
 
-    /* Password screen */
-    .password-screen {
-      text-align: center;
-      padding: 20px 0;
-    }
-
-    .password-screen .lock-icon {
-      font-size: 56px;
-      margin-bottom: 16px;
-    }
-
-    .password-screen h2 {
-      font-size: 22px;
-      color: #e91e63;
-      margin-bottom: 8px;
-    }
-
-    .password-screen p {
-      font-size: 14px;
-      color: #999;
-      margin-bottom: 24px;
-    }
-
-    .password-input-wrapper {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-    }
-
-    .password-input-wrapper input {
-      width: 200px;
-      padding: 12px 16px;
-      border: 2px solid #f0d0dc;
-      border-radius: 12px;
-      font-size: 18px;
-      text-align: center;
-      letter-spacing: 4px;
-      background: #fef5f8;
-      color: #333;
-      outline: none;
-      transition: border-color 0.3s, box-shadow 0.3s;
-      font-family: inherit;
-    }
-
-    .password-input-wrapper input:focus {
-      border-color: #e91e63;
-      box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
-      background: #fff;
-    }
-
-    .password-input-wrapper button {
-      padding: 12px 24px;
-      background: linear-gradient(135deg, #e91e63, #f06292);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.3s;
-      font-family: inherit;
-    }
-
-    .password-input-wrapper button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 16px rgba(233, 30, 99, 0.3);
-    }
-
-    .password-error {
-      display: none;
-      color: #d32f2f;
-      font-size: 13px;
-      margin-top: 10px;
-    }
-
-    .password-error.show {
-      display: block;
-    }
-
     /* Result section */
     .result {
       display: none;
@@ -471,35 +392,15 @@
 <body>
   <div class="container">
     <div class="card">
-      <h1>🎂 生日祝福生成器</h1>
+      <h1>🎂 创建生日祝福</h1>
       <p class="subtitle">填写信息，生成独一无二的生日祝福二维码</p>
 
-      <!-- Login Screen -->
-      <div class="password-screen" id="passwordScreen">
-        <div class="lock-icon">🔐</div>
-        <h2>账号登录</h2>
-        <p>输入账号和密码后即可生成生日祝福</p>
-        <div class="form-group" style="text-align:left;">
-          <label>账号</label>
-          <input type="text" id="accountInput" placeholder="输入订单账号" maxlength="20" autofocus style="width:100%;padding:12px 16px;border:2px solid #f0d0dc;border-radius:12px;font-size:15px;background:#fef5f8;color:#333;outline:none;text-align:center;font-family:inherit;">
-        </div>
-        <div class="form-group" style="text-align:left;margin-top:16px;">
-          <label>密码</label>
-          <input type="password" id="passwordInput" placeholder="请输入密码" maxlength="20" style="width:100%;padding:12px 16px;border:2px solid #f0d0dc;border-radius:12px;font-size:15px;background:#fef5f8;color:#333;outline:none;text-align:center;letter-spacing:4px;font-family:inherit;">
-        </div>
-        <button id="passwordSubmitBtn" class="submit-btn" style="margin-top:8px;">确认登录</button>
-        <p class="password-error" id="passwordError">❌ 账号或密码错误，请重试</p>
-        <p style="margin-top:16px;font-size:13px;color:#999;">
-          🔑 闲鱼订单用户？
-          <a href="/verify" style="color:#e91e63;font-weight:600;">点击这里验证密钥</a>
-        </p>
-      </div>
-
-      <!-- Form (hidden until password verified) -->
-      <div id="formWrapper" style="display:none;">
       <div class="error-msg" id="errorMsg"></div>
 
       <form id="blessingForm" enctype="multipart/form-data">
+        <!-- Hidden token field -->
+        <input type="hidden" name="token" value="<%= token %>">
+
         <!-- Name -->
         <div class="form-group">
           <label>寿星姓名 <span class="required">*</span></label>
@@ -519,7 +420,7 @@
             <img id="photoPreviewImg" src="" alt="预览">
             <span class="remove-photo" id="removePhoto">移除照片</span>
           </div>
-          <p class="hint">支持 JPG/PNG/WebP，最大 5MB</p>
+          <p class="hint">支持 JPG/PNG/WebP</p>
         </div>
 
         <!-- Template -->
@@ -547,7 +448,6 @@
             <audio id="voiceAudio" controls></audio>
             <span class="remove-voice" id="removeVoice">删除录音</span>
           </div>
-          <input type="hidden" name="voiceBlob" id="voiceBlobData">
           <p class="hint" id="voiceHint">录制一段生日祝福语音，扫码后可以播放</p>
         </div>
 
@@ -590,99 +490,38 @@
           <button class="btn-secondary" id="newOneBtn">🔄 再做一个</button>
         </div>
       </div>
-      </div><!-- /formWrapper -->
     </div>
     <footer>用 ❤️ 传递生日祝福</footer>
   </div>
 
   <script>
-    // ============ Account + Password Login ============
-    // Password rule: 账号倒数第2位在前，依次倒数第3位到倒数第7位（共6位）
-    function computePassword(account) {
-      if (account.length < 7) return '';
-      // 倒数第2位(index = len-2), 倒数第3位(len-3), ..., 倒数第7位(len-7)
-      let pwd = '';
-      for (let i = 2; i <= 7; i++) {
-        pwd += account[account.length - i];
-      }
-      return pwd;
-    }
-
-    const passwordScreen = document.getElementById('passwordScreen');
-    const accountInput = document.getElementById('accountInput');
-    const passwordInput = document.getElementById('passwordInput');
-    const passwordSubmitBtn = document.getElementById('passwordSubmitBtn');
-    const passwordError = document.getElementById('passwordError');
-    const formWrapper = document.getElementById('formWrapper');
-
-    function checkLogin() {
-      const account = accountInput.value.trim();
-      const pwd = passwordInput.value.trim();
-
-      const expectedPwd = computePassword(account);
-      if (pwd === expectedPwd) {
-        passwordScreen.style.display = 'none';
-        formWrapper.style.display = 'block';
-        passwordError.classList.remove('show');
-      } else {
-        passwordError.textContent = '❌ 密码错误，请重试（密码由账号倒数第 2~7 位组成）';
-        passwordError.classList.add('show');
-        passwordInput.value = '';
-        passwordInput.focus();
-        shakeElement(passwordInput);
-      }
-    }
-
-    function shakeElement(el) {
-      el.style.animation = 'none';
-      el.offsetHeight; // trigger reflow
-      el.style.animation = 'shake 0.4s ease';
-    }
-
-    // Allow only digits in account input
-    accountInput.addEventListener('input', () => {
-      accountInput.value = accountInput.value.replace(/\D/g, '');
-    });
-
-    passwordSubmitBtn.addEventListener('click', checkLogin);
-    accountInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        passwordInput.focus();
-      }
-    });
-    passwordInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        checkLogin();
-      }
-    });
-
     // Template previews
-    const templateMessages = {
+    var templateMessages = {
       default: '亲爱的{name}，祝你生日快乐！🎂 愿你新的一岁充满阳光与欢笑，所有的梦想都能一一实现。',
       warm: '{name}，生日快乐！💝 感谢生命中有你，愿你的每一天都如今天般甜蜜温暖，被爱包围。',
       fun: '嘿 {name}！又长大一岁啦～🎉 愿你的生活像蛋糕一样甜，像礼物一样充满惊喜，每天都有好心情！',
       simple: '{name}，生日快乐！🎈 愿你健康、快乐、幸福，每一天都闪闪发光。'
     };
 
-    const templateSelect = document.getElementById('templateSelect');
-    const templateHint = document.getElementById('templateHint');
+    var templateSelect = document.getElementById('templateSelect');
+    var templateHint = document.getElementById('templateHint');
 
-    templateSelect.addEventListener('change', () => {
+    templateSelect.addEventListener('change', function () {
       templateHint.textContent = templateMessages[templateSelect.value] || templateMessages.default;
     });
 
     // Photo preview
-    const photoInput = document.getElementById('photoInput');
-    const photoPreview = document.getElementById('photoPreview');
-    const photoPreviewImg = document.getElementById('photoPreviewImg');
-    const photoLabel = document.getElementById('photoLabel');
-    const removePhoto = document.getElementById('removePhoto');
+    var photoInput = document.getElementById('photoInput');
+    var photoPreview = document.getElementById('photoPreview');
+    var photoPreviewImg = document.getElementById('photoPreviewImg');
+    var photoLabel = document.getElementById('photoLabel');
+    var removePhoto = document.getElementById('removePhoto');
 
-    photoInput.addEventListener('change', () => {
-      const file = photoInput.files[0];
+    photoInput.addEventListener('change', function () {
+      var file = photoInput.files[0];
       if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
+        var reader = new FileReader();
+        reader.onload = function (e) {
           photoPreviewImg.src = e.target.result;
           photoPreview.style.display = 'block';
           photoLabel.style.display = 'none';
@@ -691,39 +530,37 @@
       }
     });
 
-    removePhoto.addEventListener('click', () => {
+    removePhoto.addEventListener('click', function () {
       photoInput.value = '';
       photoPreview.style.display = 'none';
       photoLabel.style.display = 'flex';
     });
 
     // Voice recording
-    let voiceBlob = null;
-    let mediaRecorder = null;
-    const recordBtn = document.getElementById('recordBtn');
-    const recordingStatus = document.getElementById('recordingStatus');
-    const voicePreview = document.getElementById('voicePreview');
-    const voiceAudio = document.getElementById('voiceAudio');
-    const removeVoice = document.getElementById('removeVoice');
-    const voiceHint = document.getElementById('voiceHint');
+    var voiceBlob = null;
+    var mediaRecorder = null;
+    var recordBtn = document.getElementById('recordBtn');
+    var recordingStatus = document.getElementById('recordingStatus');
+    var voicePreview = document.getElementById('voicePreview');
+    var voiceAudio = document.getElementById('voiceAudio');
+    var removeVoice = document.getElementById('removeVoice');
+    var voiceHint = document.getElementById('voiceHint');
 
-    recordBtn.addEventListener('click', async () => {
+    recordBtn.addEventListener('click', function () {
       if (mediaRecorder && mediaRecorder.state === 'recording') {
-        // Stop recording
         mediaRecorder.stop();
         return;
       }
 
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
         mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-        const chunks = [];
+        var chunks = [];
 
-        mediaRecorder.ondataavailable = (e) => {
+        mediaRecorder.ondataavailable = function (e) {
           if (e.data.size > 0) chunks.push(e.data);
         };
 
-        mediaRecorder.onstop = () => {
+        mediaRecorder.onstop = function () {
           voiceBlob = new Blob(chunks, { type: 'audio/webm' });
           voiceAudio.src = URL.createObjectURL(voiceBlob);
           voicePreview.style.display = 'block';
@@ -731,8 +568,7 @@
           recordBtn.classList.remove('recording');
           recordingStatus.textContent = '';
           voiceHint.textContent = '录音完成！可以播放试听';
-          // Stop mic
-          stream.getTracks().forEach(t => t.stop());
+          stream.getTracks().forEach(function (t) { t.stop(); });
         };
 
         mediaRecorder.start();
@@ -740,13 +576,13 @@
         recordBtn.innerHTML = '<span class="record-icon">⏹️</span> 停止录制';
         recordingStatus.textContent = '● 正在录音...';
         voiceHint.textContent = '正在录制，点击停止完成录音';
-      } catch (err) {
+      }).catch(function (err) {
         alert('无法访问麦克风，请检查浏览器权限设置');
         console.error('Mic error:', err);
-      }
+      });
     });
 
-    removeVoice.addEventListener('click', () => {
+    removeVoice.addEventListener('click', function () {
       voiceBlob = null;
       voicePreview.style.display = 'none';
       voiceAudio.src = '';
@@ -757,49 +593,47 @@
     });
 
     // Form submit
-    const form = document.getElementById('blessingForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const errorMsg = document.getElementById('errorMsg');
-    const loading = document.getElementById('loading');
-    const result = document.getElementById('result');
-    const qrcodeImg = document.getElementById('qrcodeImg');
-    const blessingLink = document.getElementById('blessingLink');
+    var form = document.getElementById('blessingForm');
+    var submitBtn = document.getElementById('submitBtn');
+    var errorMsg = document.getElementById('errorMsg');
+    var loading = document.getElementById('loading');
+    var result = document.getElementById('result');
+    var qrcodeImg = document.getElementById('qrcodeImg');
+    var blessingLink = document.getElementById('blessingLink');
 
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', async function (e) {
       e.preventDefault();
-      const name = document.getElementById('nameInput').value.trim();
+      var name = document.getElementById('nameInput').value.trim();
 
       if (!name) {
         showError('请输入寿星的姓名');
         return;
       }
 
-      // Hide previous state
       errorMsg.style.display = 'none';
       result.style.display = 'none';
       loading.style.display = 'block';
       submitBtn.disabled = true;
 
-      const formData = new FormData(form);
+      var formData = new FormData(form);
 
-      // Append voice blob if recorded
       if (voiceBlob) {
         formData.append('voice', voiceBlob, 'blessing-voice.webm');
       }
 
       try {
-        const res = await fetch('/api/create', {
+        // POST to the create route's API endpoint
+        var res = await fetch('/api/create', {
           method: 'POST',
           body: formData
         });
-        const data = await res.json();
+        var data = await res.json();
 
         if (!res.ok || !data.success) {
           showError(data.error || '创建失败，请稍后重试');
           return;
         }
 
-        // Show result
         qrcodeImg.src = data.qrcode;
         blessingLink.href = data.url;
         blessingLink.textContent = data.url;
@@ -824,25 +658,25 @@
     }
 
     // Copy link
-    document.getElementById('copyLinkBtn').addEventListener('click', () => {
-      const url = blessingLink.href;
-      navigator.clipboard.writeText(url).then(() => {
+    document.getElementById('copyLinkBtn').addEventListener('click', function () {
+      var url = blessingLink.href;
+      navigator.clipboard.writeText(url).then(function () {
         alert('链接已复制到剪贴板！');
-      }).catch(() => {
+      }).catch(function () {
         prompt('请手动复制链接:', url);
       });
     });
 
     // Download QR code
-    document.getElementById('downloadQrBtn').addEventListener('click', () => {
-      const link = document.createElement('a');
+    document.getElementById('downloadQrBtn').addEventListener('click', function () {
+      var link = document.createElement('a');
       link.download = 'birthday-blessing-qrcode.png';
       link.href = qrcodeImg.src;
       link.click();
     });
 
     // Start over
-    document.getElementById('newOneBtn').addEventListener('click', () => {
+    document.getElementById('newOneBtn').addEventListener('click', function () {
       form.reset();
       form.style.display = 'block';
       result.style.display = 'none';

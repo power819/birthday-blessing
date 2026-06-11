@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔑 密钥验证 - 生日祝福</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 30%, #f48fb1 60%, #f06292 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* Floating decoration */
+    body::before {
+      content: '🎈 🎂 🎁 🎉 🎊';
+      position: fixed;
+      top: -50px;
+      left: 0;
+      width: 100%;
+      font-size: 40px;
+      opacity: 0.12;
+      pointer-events: none;
+      animation: floatDown 20s linear infinite;
+      white-space: nowrap;
+      letter-spacing: 60px;
+    }
+
+    @keyframes floatDown {
+      0% { transform: translateY(-100px) rotate(0deg); }
+      100% { transform: translateY(105vh) rotate(360deg); }
+    }
+
+    .container {
+      width: 100%;
+      max-width: 440px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 24px;
+      padding: 44px 32px;
+      box-shadow: 0 20px 60px rgba(233, 30, 99, 0.2), 0 0 0 1px rgba(255,255,255,0.5);
+      backdrop-filter: blur(10px);
+      text-align: center;
+      animation: cardIn 0.6s ease;
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .lock-icon {
+      font-size: 56px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: 26px;
+      color: #e91e63;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #999;
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+
+    .password-input-wrapper {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .password-input-wrapper input {
+      width: 220px;
+      padding: 14px 18px;
+      border: 2px solid #f0d0dc;
+      border-radius: 12px;
+      font-size: 22px;
+      text-align: center;
+      letter-spacing: 6px;
+      background: #fef5f8;
+      color: #333;
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      font-family: 'SF Mono', 'Consolas', 'Courier New', monospace;
+      text-transform: uppercase;
+    }
+
+    .password-input-wrapper input:focus {
+      border-color: #e91e63;
+      box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+      background: #fff;
+    }
+
+    .verify-btn {
+      padding: 14px 28px;
+      background: linear-gradient(135deg, #e91e63, #f06292);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.3s;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .verify-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(233, 30, 99, 0.35);
+    }
+
+    .verify-btn:active {
+      transform: translateY(0);
+    }
+
+    .verify-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .error-msg {
+      display: none;
+      color: #d32f2f;
+      font-size: 14px;
+      margin-top: 16px;
+      padding: 10px 14px;
+      background: #fff0f3;
+      border: 1px solid #ffcdd2;
+      border-radius: 10px;
+    }
+
+    .error-msg.show {
+      display: block;
+      animation: shake 0.4s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      50% { transform: translateX(6px); }
+      75% { transform: translateX(-4px); }
+    }
+
+    .help-text {
+      font-size: 12px;
+      color: #bbb;
+      margin-top: 20px;
+      line-height: 1.6;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 20px;
+      color: #e91e63;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    footer {
+      text-align: center;
+      color: rgba(255,255,255,0.7);
+      font-size: 12px;
+      margin-top: 24px;
+    }
+
+    @media (max-width: 480px) {
+      .card { padding: 32px 20px; }
+      h1 { font-size: 22px; }
+      .password-input-wrapper input { width: 180px; font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="lock-icon">🔐</div>
+      <h1>密钥验证</h1>
+      <p class="subtitle">
+        请输入您在闲鱼订单中获取的<br>8 位密钥，验证后即可创建生日祝福
+      </p>
+
+      <div class="password-input-wrapper">
+        <input
+          type="text"
+          id="passwordInput"
+          placeholder="输入8位密钥"
+          maxlength="8"
+          autocomplete="off"
+          autofocus
+        >
+        <button class="verify-btn" id="verifyBtn">验证</button>
+      </div>
+
+      <div class="error-msg" id="errorMsg">
+        <% if (locals.error) { %>
+          <%= error %>
+        <% } %>
+      </div>
+
+      <p class="help-text">
+        密钥由闲鱼订单号生成，大小写字母 + 数字共 8 位<br>
+        如有问题请联系卖家获取密钥
+      </p>
+
+      <a href="/" class="back-link">← 返回首页</a>
+    </div>
+    <footer>用 ❤️ 传递生日祝福</footer>
+  </div>
+
+  <script>
+    const passwordInput = document.getElementById('passwordInput');
+    const verifyBtn = document.getElementById('verifyBtn');
+    const errorMsg = document.getElementById('errorMsg');
+
+    // Auto-uppercase and filter to valid chars
+    passwordInput.addEventListener('input', () => {
+      passwordInput.value = passwordInput.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    });
+
+    // Show server-side error if present
+    <% if (locals.error) { %>
+      errorMsg.classList.add('show');
+    <% } %>
+
+    async function doVerify() {
+      const password = passwordInput.value.trim();
+
+      if (!password || password.length < 8) {
+        showError('请输入完整的 8 位密钥');
+        passwordInput.focus();
+        return;
+      }
+
+      verifyBtn.disabled = true;
+      verifyBtn.textContent = '验证中...';
+      errorMsg.classList.remove('show');
+
+      try {
+        const res = await fetch('/api/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.valid) {
+          showError(data.error || '密钥不正确，请检查后重试');
+          passwordInput.value = '';
+          passwordInput.focus();
+          return;
+        }
+
+        // Success — redirect to /create with token
+        window.location.href = data.redirect + '?token=' + encodeURIComponent(data.token);
+
+      } catch (err) {
+        showError('网络错误，请检查网络连接后重试');
+      } finally {
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = '验证';
+      }
+    }
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.classList.add('show');
+      // Re-trigger shake
+      errorMsg.style.animation = 'none';
+      errorMsg.offsetHeight;
+      errorMsg.style.animation = 'shake 0.4s ease';
+    }
+
+    verifyBtn.addEventListener('click', doVerify);
+    passwordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        doVerify();
+      }
+    });
+  </script>
+</body>
+</html>
